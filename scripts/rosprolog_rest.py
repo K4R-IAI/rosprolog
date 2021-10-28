@@ -3,6 +3,7 @@ import rospy
 import os
 from gevent.pywsgi import WSGIServer  # Web Server
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_restplus import Api, Resource, fields
 from RosprologRestClient import RosprologRestClient
 
@@ -21,6 +22,7 @@ else:
 
 app = Flask(__name__)
 app.config['RESTPLUS_MASK_SWAGGER'] = False
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
 
 # API titel
 api = Api(app,
