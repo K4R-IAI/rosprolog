@@ -4,6 +4,7 @@ import os
 from gevent.pywsgi import WSGIServer  # Web Server
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.exceptions import BadRequest
 from flask_restplus import Api, Resource, fields
 from RosprologRestClient import RosprologRestClient
 
@@ -31,6 +32,8 @@ api = Api(app,
           description='KnowRob API reference',
           )
 
+error = BadRequest('No solution found')
+
 # Query interface
 query = api.model('Query', {
     'query': fields.String(required=True, description='The query string'),
@@ -54,7 +57,10 @@ class Query(Resource):
         rosrest.post_query(api.payload['query'])
         api.payload['response'] = rosrest.get_solutions(
             api.payload['maxSolutionCount'])
-        return api.payload
+        if not rosrest.success:
+            raise error
+        else:
+            return api.payload
 
 if __name__ == '__main__':
     rospy.init_node('rosprolog_rest', anonymous=True)
