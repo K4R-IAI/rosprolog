@@ -17,7 +17,6 @@ class RosprologRestClient:
 			'{}/next_solution'.format(name_space), PrologNextSolution)
 		self._finish_query_srv = rospy.ServiceProxy(
 			'{}/finish'.format(name_space), PrologFinish)
-		self.success = True
 		if wait_for_services:
 			rospy.loginfo('waiting for {} services'.format(name_space))
 			self._finish_query_srv.wait_for_service(timeout=timeout)
@@ -51,7 +50,8 @@ class RosprologRestClient:
 					if next_solution.status == PrologNextSolutionResponse.OK:
 						solutions.append(dict(json.loads(next_solution.solution)))
 					elif next_solution.status == PrologNextSolutionResponse.NO_SOLUTION:
-						self.success = len(solutions) > 0
+						if not solutions:
+							raise BadRequest('No solution found')
 						break
 					else:
 						raise BadRequest('Bad query')
